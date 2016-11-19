@@ -11,7 +11,10 @@
 #define new DEBUG_NEW
 #endif
 
-
+#include <thread>
+#include <mutex>
+std::mutex g_mutex;
+std::condition_variable g_cond;
 videowindow CsampleDlg::m_vw;
 
 // CAboutDlg dialog used for App About
@@ -52,7 +55,12 @@ END_MESSAGE_MAP()
 
 
 CsampleDlg::CsampleDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_SAMPLE_DIALOG, pParent)
+	: CDialogEx(IDD_SAMPLE_DIALOG, pParent),
+  fp(nullptr),
+  screen_w(1920), screen_h(1080),
+  pixel_w(1920), pixel_h(1080),
+  yPlane(nullptr), uPlane(nullptr), vPlane(nullptr),
+  b_start(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -67,6 +75,8 @@ BEGIN_MESSAGE_MAP(CsampleDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+  ON_BN_CLICKED(IDOK, &CsampleDlg::OnBnClickedOk)
+  ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -102,6 +112,15 @@ BOOL CsampleDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+  fopen_s(&fp, "../../1.yuv", "rb+");
+
+  yPlaneSz = pixel_w * pixel_h;
+  uvPlaneSz = pixel_w * pixel_h / 4;
+  uvPitch = pixel_w / 2;
+  yPlane = std::make_unique<UINT8[]>(yPlaneSz);
+  uPlane = std::make_unique<UINT8[]>(uvPlaneSz);
+  vPlane = std::make_unique<UINT8[]>(uvPlaneSz);
+  init_sdl(1920, 1080);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -155,3 +174,106 @@ HCURSOR CsampleDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+void CsampleDlg::init_sdl(UINT16 width, UINT16 height)
+{
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+    exit(1);
+  }
+
+  // Make a screen to put our video
+  screen = SDL_CreateWindowFrom(m_vw.m_hWnd);
+  if (!screen) {
+    exit(1);
+  }
+
+  renderer = SDL_CreateRenderer(screen, -1, 0);
+  if (!renderer) {
+    exit(1);
+  }
+
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12,
+    SDL_TEXTUREACCESS_STREAMING, screen_w, screen_h);
+
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    pixel_w = width;
+  }
+  pixel_h = height;
+
+  m_vw.GetClientRect(&m_rect);
+  frame_w = m_rect.right - m_rect.left;
+  frame_h = m_rect.bottom - m_rect.top;
+
+  rect.x = 0;
+  rect.y = 0;
+  rect.w = pixel_w;
+  rect.h = pixel_h;
+
+  win_rect.x = m_rect.left;
+  win_rect.y = m_rect.top;
+  win_rect.w = frame_w;
+  win_rect.h = frame_h;
+
+  uvPitch = pixel_w / 2;
+}
+
+void CsampleDlg::OnBnClickedOk()
+{
+  m_vw.GetClientRect(&m_rect);
+  switch (b_start)
+  {
+  case true:
+  {
+    {
+      std::lock_guard<std::mutex> lock(g_mutex);
+      b_start = FALSE;
+    }
+    g_cond.notify_one();
+    fseek(fp, 0, SEEK_SET);
+    GetDlgItem(IDOK)->SetWindowTextW(L"Start");
+  }
+  break;
+
+  case false:
+  {
+    b_start = TRUE;
+    std::thread t = std::thread([=] {display_proc(&b_start); });
+    t.detach();
+    GetDlgItem(IDOK)->SetWindowTextW(L"Stop");
+  }
+  break;
+  }
+}
+
+
+void CsampleDlg::display_proc(BOOL *b_start)
+{
+  std::unique_lock<std::mutex> lock(g_mutex);
+  while (*b_start)
+  {
+    size_t st = fread(yPlane.get(), 1, pixel_w * pixel_h, fp);
+    fread(uPlane.get(), 1, pixel_w * pixel_h / 4, fp);
+    fread(vPlane.get(), 1, pixel_w * pixel_h / 4, fp);
+
+    SDL_UpdateYUVTexture(texture, NULL, yPlane.get(), pixel_w, uPlane.get(),
+      uvPitch, vPlane.get(), uvPitch);
+    SDL_RenderCopy(renderer, texture, &rect, &win_rect);
+    SDL_RenderPresent(renderer);
+    SDL_RenderClear(renderer);
+    if (st == 0)
+      fseek(fp, 0, SEEK_SET);
+
+    g_cond.wait_for(lock, std::chrono::milliseconds(33));
+  }
+}
+
+
+
+void CsampleDlg::OnClose()
+{
+  if (fp != nullptr)
+    fclose(fp);
+
+  CDialogEx::OnClose();
+}

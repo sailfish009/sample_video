@@ -94,6 +94,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libcmtd</IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
