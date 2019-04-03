@@ -16,6 +16,26 @@
 // std::unique_ptr
 #include <memory>
 
+#if false
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/videoio/videoio.hpp>
+#include <opencv2/highgui/highgui_c.h>
+
+#pragma comment(lib, "opencv_core400d.lib" )
+#pragma comment(lib, "opencv_imgproc400d.lib" )
+#pragma comment(lib, "opencv_highgui400d.lib" )
+#pragma comment(lib, "opencv_ml400d.lib" )
+#pragma comment(lib, "opencv_video400d.lib" )
+#pragma comment(lib, "opencv_features2d400d.lib" )
+#pragma comment(lib, "opencv_calib3d400d.lib" )
+#pragma comment(lib, "opencv_imgcodecs400d.lib" )
+#pragma comment(lib, "opencv_videoio400d.lib" )
+
+using namespace cv;
+#endif
+
 // CsampleDlg dialog
 class CsampleDlg : public CDialogEx
 {

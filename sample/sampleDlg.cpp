@@ -17,6 +17,10 @@ std::mutex g_mutex;
 std::condition_variable g_cond;
 videowindow CsampleDlg::m_vw;
 
+#if false
+Mat image;
+#endif
+
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -112,6 +116,9 @@ BOOL CsampleDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+
+  // yuv and sdl
+#if true
   fopen_s(&fp, "../../1.yuv", "rb+");
 
   yPlaneSz = pixel_w * pixel_h;
@@ -121,6 +128,18 @@ BOOL CsampleDlg::OnInitDialog()
   uPlane = std::make_unique<UINT8[]>(uvPlaneSz);
   vPlane = std::make_unique<UINT8[]>(uvPlaneSz);
   init_sdl(1920, 1080);
+#endif
+
+  // opencv v4.0
+#if false
+  image = cv::imread("./1.png");
+  if (image.data == 0){ MessageBox(L"Image File Open Error", L"Error");}
+  namedWindow("Display window", WINDOW_AUTOSIZE);
+  HWND hwnd = (HWND)cvGetWindowHandle("Display window");
+  HWND hParent = ::GetParent(hwnd);
+  ::SetParent(hwnd, GetDlgItem(IDC_IMAGE)->m_hWnd);
+  ::ShowWindow(hParent, SW_HIDE);
+#endif
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
