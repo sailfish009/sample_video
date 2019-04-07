@@ -155,6 +155,20 @@ BOOL CsampleDlg::OnInitDialog()
   HWND hParent = ::GetParent(hwnd);
   ::SetParent(hwnd, img_hwnd);
   ::ShowWindow(hParent, SW_HIDE);
+	
+  std::vector<Vec4i> hierarchy;
+  threshold(gray, bin, 127, 255, 0);
+  findcontours(bin, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+	
+  Mat drawing = img;
+  for(int i=0; i< contours.size(); ++i)
+  {
+    scalar color = scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+    drawcontours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
+  }
+  namedWindow("Contours", WINDOW_AUTOSIZE);
+  imshow("Contours", drawing);
+	
 #endif
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
