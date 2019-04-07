@@ -19,6 +19,7 @@ videowindow CsampleDlg::m_vw;
 
 #if false
 Mat image;
+Mat img;
 #endif
 
 // CAboutDlg dialog used for App About
@@ -132,12 +133,27 @@ BOOL CsampleDlg::OnInitDialog()
 
   // opencv v4.0
 #if false
+  HWND img_hwnd = GetDlgItem(IDC_IMAGE)->m_hWnd;
+  RECT rect;
+  ::GetClientRect(img_hwnd, &rect);
+
   image = cv::imread("./1.png");
   if (image.data == 0){ MessageBox(L"Image File Open Error", L"Error");}
-  namedWindow("Display window", WINDOW_AUTOSIZE);
+
+  Rect r
+  (
+    (int)rect.left, 
+    (int)rect.top, 
+    (int)(rect.right - rect.left), 
+    (int)(rect.bottom - rect.top)
+  );
+
+  resize(image, img, Size(r.width, r.height), 0, 0, INTER_CUBIC);
+
+  imshow("Display window", img);
   HWND hwnd = (HWND)cvGetWindowHandle("Display window");
   HWND hParent = ::GetParent(hwnd);
-  ::SetParent(hwnd, GetDlgItem(IDC_IMAGE)->m_hWnd);
+  ::SetParent(hwnd, img_hwnd);
   ::ShowWindow(hParent, SW_HIDE);
 #endif
 
