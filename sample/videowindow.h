@@ -1,6 +1,6 @@
 #pragma once
 #include "afxwin.h"
-#define VIDEOWINDOW_CLASSNAME    _T("videowindow")  // Window class name
+#define VIDEOWINDOW_CLASSNAME    L"videowindow"  // Window class name
 class videowindow :
   public CWnd
 {

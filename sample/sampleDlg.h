@@ -4,10 +4,15 @@
 
 #pragma once
 #include "videowindow.h"
+
+// yuv and sdl
+#if false
 #include "../include/SDL.h"
 #include "../include/SDL_thread.h"
 #include "../include/SDL_syswm.h"
 #pragma comment(lib, "../lib/SDL2.lib")
+#endif
+
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "version.lib")
 #pragma comment(lib, "imm32.lib")
@@ -16,22 +21,23 @@
 // std::unique_ptr
 #include <memory>
 
-#if false
+// opencv v4.0
+#if true 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/highgui/highgui_c.h>
 
-#pragma comment(lib, "opencv_core400d.lib" )
-#pragma comment(lib, "opencv_imgproc400d.lib" )
-#pragma comment(lib, "opencv_highgui400d.lib" )
-#pragma comment(lib, "opencv_ml400d.lib" )
-#pragma comment(lib, "opencv_video400d.lib" )
-#pragma comment(lib, "opencv_features2d400d.lib" )
-#pragma comment(lib, "opencv_calib3d400d.lib" )
-#pragma comment(lib, "opencv_imgcodecs400d.lib" )
-#pragma comment(lib, "opencv_videoio400d.lib" )
+#pragma comment(lib, "opencv_core401d.lib" )
+#pragma comment(lib, "opencv_imgproc401d.lib" )
+#pragma comment(lib, "opencv_highgui401d.lib" )
+#pragma comment(lib, "opencv_ml401d.lib" )
+#pragma comment(lib, "opencv_video401d.lib" )
+#pragma comment(lib, "opencv_features2d401d.lib" )
+#pragma comment(lib, "opencv_calib3d401d.lib" )
+#pragma comment(lib, "opencv_imgcodecs401d.lib" )
+#pragma comment(lib, "opencv_videoio401d.lib" )
 
 using namespace cv;
 #endif
@@ -62,12 +68,16 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
   afx_msg void OnBnClickedOk();
+  afx_msg void OnClose();
 	DECLARE_MESSAGE_MAP()
 
 public:
   static videowindow m_vw;
 
 private:
+
+  // yuv and sdl
+#if false
   FILE * fp;
   std::unique_ptr<UINT8[]> yPlane;
   std::unique_ptr<UINT8[]> uPlane;
@@ -88,10 +98,15 @@ private:
   SDL_Texture *texture;
   SDL_Rect rect;
   SDL_Rect win_rect;
-  RECT m_rect;
   void init_sdl(UINT16 width, UINT16 height);
   void display_proc(BOOL *b_start);
+#endif
 
-public:
-  afx_msg void OnClose();
+  // opencv v4.0
+#if true
+  void init_image();
+#endif
+
+  RECT m_rect;
+
 };
